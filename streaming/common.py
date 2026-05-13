@@ -1,5 +1,3 @@
-"""Shared helpers for streaming jobs."""
-
 import json
 import logging
 import os
@@ -20,7 +18,6 @@ def setup_logging(name: str) -> logging.Logger:
 
 
 def parse_bitmex_ts(s: str) -> datetime:
-    """Parse Bitmex ISO timestamp 'YYYY-MM-DDTHH:MM:SS.fffZ' as UTC datetime."""
     if s.endswith("Z"):
         s = s[:-1] + "+00:00"
     return datetime.fromisoformat(s)
@@ -28,7 +25,6 @@ def parse_bitmex_ts(s: str) -> datetime:
 
 def kafka_consumer(topic: str, group_id: str, bootstrap: str = None) -> KafkaConsumer:
     bootstrap = bootstrap or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
-    # Retry until the broker is reachable; useful at cold start in docker-compose.
     for attempt in range(30):
         try:
             return KafkaConsumer(
@@ -39,7 +35,6 @@ def kafka_consumer(topic: str, group_id: str, bootstrap: str = None) -> KafkaCon
                 enable_auto_commit=True,
                 value_deserializer=lambda v: json.loads(v.decode("utf-8")),
                 key_deserializer=lambda v: v.decode("utf-8") if v else None,
-                consumer_timeout_ms=0,
             )
         except NoBrokersAvailable:
             time.sleep(2)
@@ -69,7 +64,7 @@ def cassandra_session(keyspace: str = "crypto") -> Session:
         try:
             cluster = Cluster(hosts, protocol_version=5)
             return cluster.connect(keyspace)
-        except Exception as exc:  # cluster not ready yet
+        except Exception as exc:
             last_exc = exc
             time.sleep(3)
     raise RuntimeError(f"Cassandra not reachable at {hosts}: {last_exc}")

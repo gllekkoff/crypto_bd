@@ -13,5 +13,4 @@ COPY common.py whale_alert.py volatility_monitor.py market_momentum.py trades_si
 
 ENV PYTHONUNBUFFERED=1
 
-# Default command is overridden per-service in docker-compose.
 CMD ["python", "-u", "whale_alert.py"]

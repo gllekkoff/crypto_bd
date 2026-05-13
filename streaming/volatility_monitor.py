@@ -1,11 +1,3 @@
-"""A2 — Volatility Monitor.
-
-For each symbol keep a 10-minute sliding window of (event_ts, price). Split it
-at the 5-minute mark into "current" and "previous" half-windows. When the std
-of the current half exceeds the std of the previous half by more than VOL_MULT,
-emit a volatility alert. Alerts are rate-limited per symbol to avoid flooding.
-"""
-
 from collections import defaultdict, deque
 from typing import Deque, Tuple
 
@@ -24,7 +16,7 @@ WINDOW_SECONDS = 10 * 60
 HALF_SECONDS = 5 * 60
 MIN_SAMPLES_PER_HALF = 30
 VOL_MULT = 2.0
-ALERT_COOLDOWN_SECONDS = 60  # at most one alert per symbol per minute
+ALERT_COOLDOWN_SECONDS = 60
 
 log = setup_logging("volatility-monitor")
 

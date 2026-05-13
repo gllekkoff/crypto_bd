@@ -1,16 +1,3 @@
-"""A3 — Market Momentum dashboard.
-
-Each minute, for each symbol, write one row to Cassandra `market_momentum`:
-    - current_price       — last trade price in the minute
-    - price_change_pct    — (last_price - prev_minute_last_price) / prev * 100
-    - volume              — sum of trade sizes (USD-equivalent) in the minute
-    - buy_sell_ratio      — buy_volume / sell_volume in the minute
-
-A background flusher emits the row when a minute is "closed" (i.e. when the
-current wall clock has crossed into the next minute) so that even when trades
-stop arriving briefly the dashboard still gets a row written.
-"""
-
 import threading
 from collections import defaultdict
 from dataclasses import dataclass
@@ -59,7 +46,6 @@ class MomentumAggregator:
                 s.minute = minute
                 s.first_price = price
             elif minute != s.minute:
-                # Trade belongs to a different minute: flush the old one first.
                 self._flush_locked(symbol, s)
                 s.minute = minute
                 s.first_price = price
@@ -76,7 +62,6 @@ class MomentumAggregator:
                 s.volume_sell += size
 
     def flush_closed_minutes(self) -> None:
-        """Flush any per-symbol minute that is strictly older than the current wall-clock minute."""
         current_minute = minute_floor(utcnow())
         with self.lock:
             for symbol, s in list(self.state.items()):

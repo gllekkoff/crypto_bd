@@ -1,11 +1,3 @@
-"""Trades Sink — persist raw trades from Kafka to Cassandra.
-
-This backs the C2 `/api/trades` lookup endpoint. The Kafka topic is the source
-of truth; this table is an operational, queryable mirror of the most recent
-trades. Person 2's batch consumer writes the same topic to cold storage for
-historical analytics.
-"""
-
 from common import (
     cassandra_session,
     kafka_consumer,

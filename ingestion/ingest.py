@@ -1,10 +1,3 @@
-"""Bitmex WebSocket -> Kafka ingestion service.
-
-Subscribes to trade and quote channels on Bitmex public WS API and republishes
-each message to Kafka. One service instance per cluster; horizontal scaling is
-not needed at the data rates Bitmex publishes for a handful of symbols.
-"""
-
 import asyncio
 import json
 import logging
@@ -79,13 +72,11 @@ async def consume_bitmex(producer: AIOKafkaProducer, stop: asyncio.Event) -> Non
                     raw = await ws.recv()
                     data = json.loads(raw)
 
-                    # BitMEX sends control messages (welcome, subscribe ack, etc.)
                     if "table" not in data or "data" not in data:
                         if "error" in data:
                             log.warning("bitmex error: %s", data)
                         continue
 
-                    # "partial" is an initial snapshot; "insert" is new data.
                     action = data.get("action")
                     if action not in ("insert", "partial"):
                         continue

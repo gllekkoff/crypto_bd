@@ -1,14 +1,3 @@
-"""A1 — Whale Alert.
-
-For each symbol maintain a 10-minute sliding window of trade sizes. For every
-new trade compute the 95th percentile of sizes in the window; if the trade is
-above the threshold, emit a whale alert to Kafka and persist it in Cassandra.
-
-State is held in memory in the consumer process — restarts lose the window
-but Kafka offsets persist via the consumer group, so the next trade refills
-the window within minutes.
-"""
-
 from collections import defaultdict, deque
 from typing import Deque, Tuple
 
@@ -25,14 +14,12 @@ from common import (
 
 WINDOW_SECONDS = 10 * 60
 PERCENTILE = 95
-MIN_SAMPLES = 30  # don't fire alerts until the window has warmed up
+MIN_SAMPLES = 30
 
 log = setup_logging("whale-alert")
 
 
 class SlidingWindow:
-    """Time-bounded window of (epoch_seconds, size) tuples."""
-
     def __init__(self, seconds: int) -> None:
         self.seconds = seconds
         self.items: Deque[Tuple[float, float]] = deque()
@@ -72,7 +59,6 @@ def main() -> None:
         try:
             symbol = trade["symbol"]
             ts = parse_bitmex_ts(trade["trade_time"]).timestamp()
-            # size is USD-equivalent for BitMEX inverse contracts; use it as the canonical metric.
             size = float(trade.get("size") or 0)
             price = float(trade.get("price") or 0)
             side = trade.get("side") or ""
@@ -106,7 +92,6 @@ def main() -> None:
             )
             log.info("WHALE %s size=%.0f threshold=%.0f dev=%.1f%%", symbol, size, threshold, deviation)
 
-        # Add AFTER computing percentile so the current trade isn't compared against itself.
         w.add(ts, size)
 
 
